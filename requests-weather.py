@@ -7,8 +7,21 @@ api_key_darksky = config.api_key_darksky
 def unixtime_to_readable(unixtime):
     return datetime.datetime.fromtimestamp(unixtime).strftime('%Y-%m-%d %H:%M:%S')
 
+def iterate_dict(src, search_key=None, replace_func=None, in_place=False):
+    if isinstance(src, dict):
+        for key, value in src.items():
+            src[key] = iterate_dict(value, search_key=search_key, replace_func=replace_func)
+    elif isinstance(src, list):
+        for data in src:
+            src[data] = iterate_dict(data, search_key=search_key, replace_func=replace_func)
+    else:
+        if search_key and replace_func is not None:
+            return replace_func(src[search_key])
+        else:
+            return src
+
 class Darksky(object):
-    DARKSKY_FORECAST_URL = 'https://api.darksky.net/forecast/'
+    darksky_url = 'https://api.darksky.net/forecast/'
 
     def __init__(self, api_key=None, lat=None, long=None, **kwargs):
         self.api_key = api_key
@@ -21,19 +34,16 @@ class Darksky(object):
 
 
     def get_darksky_data(self):
-        url = Darksky.DARKSKY_FORECAST_URL + str(self.api_key) + '/' + str(self.lat) + ',' + str(self.long)
+        url = Darksky.darksky_url + str(self.api_key) + '/' + str(self.lat) + ',' + str(self.long)
         self.data = requests.get(url).json()
-#        for key, value in dictionary.items():
-#            if isinstance(value, dict):
-#                iterate(value)
-#                continue
         self.time = datetime.datetime.now()
+        self.data = iterate_dict(self.data, search_key='time', replace_func=unixtime_to_readable)
 
 
     def get_hourly_forecast(self):
         hourly_data = self.data['hourly']['data']
-        for data in hourly_data:
-            data['time'] = unixtime_to_readable(data['time'])
+#        for data in hourly_data:
+#            data['time'] = unixtime_to_readable(data['time'])
 
         return hourly_data
 
@@ -46,12 +56,10 @@ class Darksky(object):
         return minutely_data
 
     def get_current_weather(self):
-        current_weather = self.data['currently']
-
-        return current_weather
+        return self.data['currently']
 
 if __name__=='__main__':
     lat = +35.53860
     long = -97.90141
     darksky_data = Darksky(api_key_darksky, lat, long)
-    print(darksky_data.get_current_weather())
+    print(darksky_data.get_hourly_forecast())
