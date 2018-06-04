@@ -10,15 +10,15 @@ def unixtime_to_readable(unixtime):
 def iterate_dict(src, search_key=None, replace_func=None, in_place=False):
     if isinstance(src, dict):
         for key, value in src.items():
-            src[key] = iterate_dict(value, search_key=search_key, replace_func=replace_func)
+            if key==search_key and replace_func:
+                value = replace_func(value)
+            else:
+                value = iterate_dict(value, search_key=search_key, replace_func=replace_func)
     elif isinstance(src, list):
         for data in src:
-            src[data] = iterate_dict(data, search_key=search_key, replace_func=replace_func)
+            data = iterate_dict(data, search_key=search_key, replace_func=replace_func)
     else:
-        if search_key and replace_func is not None:
-            return replace_func(src[search_key])
-        else:
-            return src
+        print(src)
 
 class Darksky(object):
     darksky_url = 'https://api.darksky.net/forecast/'
@@ -31,6 +31,7 @@ class Darksky(object):
         self.time = None
         if api_key is not None:
             self.get_darksky_data()
+        print(self.data)
 
 
     def get_darksky_data(self):
