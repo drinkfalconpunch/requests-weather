@@ -7,17 +7,22 @@ api_key_darksky = config.api_key_darksky
 def unixtime_to_readable(unixtime):
     return datetime.datetime.fromtimestamp(unixtime).strftime('%Y-%m-%d %H:%M:%S')
 
-def iterate_dict(src: dict, search_key=None, replace_func=None):
+def iterate_dict(src: dict, search_key=None, replace_func=None, in_place=False):
     for key, value in src.items():
         if isinstance(value, dict):
             iterate_dict(value, search_key=search_key, replace_func=replace_func)
         elif isinstance(value, list):
             for data in value:
-                iterate_dict(data, search_key=search_key, replace_func=replace_func)
+                if isinstance(data, (list, dict)):
+                    iterate_dict(data, search_key=search_key, replace_func=replace_func)
+                else:
+                    continue
         elif key==search_key and replace_func:
             src[key] = replace_func(value)
         else:
-            return src
+            continue
+    if not in_place:
+        return src
 
 class Darksky(object):
     darksky_url = 'https://api.darksky.net/forecast/'
