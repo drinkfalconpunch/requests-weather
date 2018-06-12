@@ -30,7 +30,7 @@ class Darksky(object):
 
     def print_hourly_forecast(self):
         hourly_data = self.get_hourly_forecast()
- 
+
         print('time', 'temperature')
         for data in hourly_data:
             print(data['time'])
